@@ -1,1 +1,5 @@
+print("Initializing BETSC Systems...")
+print("Loading target star catalogue...")
+print("Checking data directories...")
+print("All systems nominal.")
 print("BETSC Is Online And Ready To Scan The Skies!")
