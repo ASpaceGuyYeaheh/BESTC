@@ -1,0 +1,18 @@
+{
+  "HD 189733": {
+    "spectral_type": "K1V",
+    "radius_solar": 0.76,
+    "temperature": 5040,
+    "distance_ly": 64.5,
+    "known_planets": ["HD 189733 b"],
+    "variability": "low"
+  },
+  "Kepler-17": {
+    "spectral_type": "G2V",
+    "radius_solar": 1.05,
+    "temperature": 5780,
+    "distance_ly": 2600,
+    "known_planets": ["Kepler-17 b"],
+    "variability": "medium"
+  }
+}
