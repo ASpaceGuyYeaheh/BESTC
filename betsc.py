@@ -5,29 +5,40 @@ import random
 # CONFIG
 # =========================
 
-SCAN_INTERVAL = 0.1          # seconds between scans
-BASELINE_SAMPLES = 50        # how many samples to build baseline
-DIP_THRESHOLD = 0.003        # fractional drop to count as "dip start"
-MIN_DIP_DURATION = 5.0       # seconds, below this = flicker
-MAX_FLICKER_DEPTH = 0.005    # shallow dips more likely flicker
-MAX_CLOUD_VARIANCE = 0.0008  # how "messy" a dip can be before it's a cloud
-MIN_PLANET_DEPTH = 0.005     # minimum depth for a "real" transit candidate
+SCAN_INTERVAL = 0.1
+BASELINE_SAMPLES = 50
+DIP_THRESHOLD = 0.003
+MIN_DIP_DURATION = 5.0
+MAX_FLICKER_DEPTH = 0.005
+MAX_CLOUD_VARIANCE = 0.0008
+MIN_PLANET_DEPTH = 0.005
+
+WAIT_TIME = 10.0  # seconds BETSC waits per star
+
+# =========================
+# LOAD STAR LIST
+# =========================
+
+def load_target_stars():
+    try:
+        with open("target_stars.txt", "r") as f:
+            stars = [line.strip() for line in f.readlines() if line.strip()]
+        return stars
+    except FileNotFoundError:
+        print("BETSC: target_stars.txt missing!! I can’t scan NOTHING!!")
+        return []
 
 # =========================
 # MOCK BRIGHTNESS SOURCE
 # =========================
 
 def get_brightness():
-    """
-    Replace this with your real brightness sampling.
-    For now: returns ~1.0 with tiny noise.
-    """
     base = 1.0
     noise = random.uniform(-0.0005, 0.0005)
     return base + noise
 
 # =========================
-# DIP DATA STRUCTURE
+# DIP EVENT CLASS
 # =========================
 
 class DipEvent:
@@ -52,15 +63,13 @@ class DipEvent:
 
     @property
     def max_depth(self):
-        if not self.samples:
-            return 0.0
-        return max(self.depths)
+        return max(self.depths) if self.samples else 0.0
 
     @property
     def variance(self):
-        if not self.samples:
-            return 0.0
         vals = self.depths
+        if not vals:
+            return 0.0
         mean = sum(vals) / len(vals)
         return sum((v - mean) ** 2 for v in vals) / len(vals)
 
@@ -69,124 +78,116 @@ class DipEvent:
 # =========================
 
 def classify_dip(dip: DipEvent):
-    """
-    Returns: "planet", "cloud", or "flicker"
-    based on duration, depth, and variance.
-    """
     dur = dip.duration
     depth = dip.max_depth
     var = dip.variance
 
-    # Very short + shallow → flicker
     if dur < MIN_DIP_DURATION or depth < MAX_FLICKER_DEPTH:
         return "flicker"
 
-    # Deep enough to be interesting
     if depth >= MIN_PLANET_DEPTH:
-        # Smooth → planet
         if var <= MAX_CLOUD_VARIANCE:
             return "planet"
-        # Messy → cloud
         else:
             return "cloud"
 
-    # Default: cloud / junk
     return "cloud"
 
 # =========================
-# BETSC REACTIONS
+# BETSC PERSONALITY LINES
 # =========================
+
+def betsc_announce_star(star):
+    print(f"\nBETSC: Now scanning **{star}**!")
+    print("BETSC: OOO I hope this one has a planet… I’m READY!")
+
+def betsc_waiting():
+    print("BETSC: Holding my breath… I love exoplanets more than oxyge—")
+
+def betsc_disappointed():
+    print("BETSC: Awwwwwwww… nothing. Not even a tiny dip.")
+    print("BETSC: It’s okay. I’ll find one. I’m the BEST. I think.")
 
 def betsc_on_dip_start():
     print("BETSC: I THINK I SEE SOMETHING!! HOLD ON—HOLD ON—HOLD ON—")
 
-def betsc_on_planet(dip: DipEvent):
+def betsc_on_planet(dip):
     print("BETSC: YES!! YES!! IT’S REAL!! I KNEW IT!!")
-    print(f"BETSC: Transit complete! Duration: {dip.duration:.1f}s, depth: {dip.max_depth:.5f}")
-    print("BETSC: Logging this IMMEDIATELY before I explode.")
+    print(f"BETSC: Transit complete! Duration {dip.duration:.1f}s, depth {dip.max_depth:.5f}!")
+    print("BETSC: LOGGING THIS BEFORE I EXPLODE WITH JOY.")
 
-def betsc_on_cloud(dip: DipEvent):
+def betsc_on_cloud(dip):
     print("BETSC: Wow, that’s a big exopla— oh no wait it’s a stupid cloud.")
-    print("BETSC: Clouds are my mortal enemy. I was ROOTING for that dip.")
+    print("BETSC: Clouds are banned from space. Effective immediately.")
 
-def betsc_on_flicker(dip: DipEvent):
+def betsc_on_flicker(dip):
     print("BETSC: That dip was… microscopic.")
-    print("BETSC: Star flicker. Fake. Fraud. I’m moving on.")
+    print("BETSC: Star flicker. Fake. Fraud. NEXT.")
 
-def betsc_idle_line():
-    # Optional: little flavour while scanning
-    if random.random() < 0.02:
-        print("BETSC: Scanning… I love exoplanets more than oxyge—")
-        # You can cut to grave in your visual layer :)
-
-# =========================
-# LOGGING HOOKS
-# =========================
-
-def log_discovery(dip: DipEvent, classification: str):
-    """
-    Replace this with your real logging system.
-    """
-    print(f"[LOG] Dip classified as {classification.upper()}: "
-          f"duration={dip.duration:.2f}s, depth={dip.max_depth:.5f}, variance={dip.variance:.6f}")
+def betsc_sleep():
+    print("\nBETSC: All stars done! I’m getting a bit tire— SNORE.")
+    print("BETSC: zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz…")
 
 # =========================
 # MAIN SCAN LOOP
 # =========================
 
 def run_betsc():
-    print("BETSC: Initialising BEST— I mean BETS— I mean… I’m the BEST, okay?")
-    print("BETSC: Building baseline brightness…")
+    print("BETSC: Initialising BEST— I mean BETS— I mean— I AM the BEST.")
+    print("BETSC: Building baseline…")
 
-    # Build baseline
     baseline_samples = []
     for _ in range(BASELINE_SAMPLES):
-        b = get_brightness()
-        baseline_samples.append(b)
+        baseline_samples.append(get_brightness())
         time.sleep(SCAN_INTERVAL)
 
     baseline = sum(baseline_samples) / len(baseline_samples)
-    print(f"BETSC: Baseline locked at {baseline:.5f}. Time to hunt some planets!")
+    print(f"BETSC: Baseline locked at {baseline:.5f}. LET’S GOOOOO.")
 
-    current_dip = None
+    stars = load_target_stars()
+    if not stars:
+        return
 
-    while True:
-        t = time.time()
-        brightness = get_brightness()
-        delta = baseline - brightness  # positive if brightness dropped
+    for star in stars:
 
-        # No active dip yet
-        if current_dip is None:
-            # Check for dip start
-            if delta >= DIP_THRESHOLD:
-                current_dip = DipEvent(start_time=t, baseline=baseline)
-                current_dip.add_sample(t, brightness)
-                betsc_on_dip_start()
+        betsc_announce_star(star)
+
+        start_time = time.time()
+        dip = None
+
+        while time.time() - start_time < WAIT_TIME:
+            brightness = get_brightness()
+            delta = baseline - brightness
+
+            if dip is None:
+                if delta >= DIP_THRESHOLD:
+                    dip = DipEvent(time.time(), baseline)
+                    dip.add_sample(time.time(), brightness)
+                    betsc_on_dip_start()
             else:
-                betsc_idle_line()
-        else:
-            # We are inside a dip: keep tracking
-            current_dip.add_sample(t, brightness)
+                dip.add_sample(time.time(), brightness)
 
-            # Check if dip has ended (brightness back near baseline)
-            if abs(brightness - baseline) < DIP_THRESHOLD / 2:
-                current_dip.end_time = t
+                if abs(brightness - baseline) < DIP_THRESHOLD / 2:
+                    dip.end_time = time.time()
+                    classification = classify_dip(dip)
 
-                # Classify
-                classification = classify_dip(current_dip)
-                log_discovery(current_dip, classification)
+                    if classification == "planet":
+                        betsc_on_planet(dip)
+                    elif classification == "cloud":
+                        betsc_on_cloud(dip)
+                    else:
+                        betsc_on_flicker(dip)
 
-                if classification == "planet":
-                    betsc_on_planet(current_dip)
-                elif classification == "cloud":
-                    betsc_on_cloud(current_dip)
-                else:
-                    betsc_on_flicker(current_dip)
+                    dip = None
+                    break
 
-                # Reset for next dip
-                current_dip = None
+            betsc_waiting()
+            time.sleep(SCAN_INTERVAL)
 
-        time.sleep(SCAN_INTERVAL)
+        if dip is None:
+            betsc_disappointed()
+
+    betsc_sleep()
 
 # =========================
 # ENTRY POINT
