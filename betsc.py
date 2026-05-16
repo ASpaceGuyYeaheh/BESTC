@@ -29,28 +29,48 @@ def load_target_stars():
         return []
 
 # =========================
-# BRIGHTNESS SOURCE (WITH SAFE TRANSIT)
+# BRIGHTNESS SOURCE (BETTER TRANSIT SIM)
 # =========================
 
-# Chance that a given brightness sample is inside a transit
-TRANSIT_PROBABILITY = 0.15     # 15% of samples will be in a dip
-TRANSIT_DEPTH = 0.01           # 1% dip
+TRANSIT_DEPTH = 0.01          # 1% dip
+TRANSIT_DURATION = 3.0        # seconds
+MIN_GAP = 5.0                 # min seconds between transits
+MAX_GAP = 15.0                # max seconds between transits
+
+_in_transit = False
+_transit_end = 0.0
+_next_transit_time = time.time() + random.uniform(MIN_GAP, MAX_GAP)
 
 def get_brightness():
     """
-    Safe brightness source:
-    - Base brightness ~1.0
-    - Small noise
-    - Sometimes a 1% dip to simulate an exoplanet transit
-    Returns a single float. No generators. No complexity.
+    Simulates:
+    - mostly flat brightness with noise
+    - occasional 3s transit dips separated by 5–15s gaps
+    Returns a single float.
     """
+    global _in_transit, _transit_end, _next_transit_time
+
     base = 1.0
     noise = random.uniform(-0.0005, 0.0005)
+    now = time.time()
 
-    # Simulated transit: sometimes reduce brightness by TRANSIT_DEPTH
-    if random.random() < TRANSIT_PROBABILITY:
+    # If currently in a transit
+    if _in_transit:
+        if now < _transit_end:
+            return base - TRANSIT_DEPTH + noise
+        else:
+            # Transit finished
+            _in_transit = False
+            _next_transit_time = now + random.uniform(MIN_GAP, MAX_GAP)
+            return base + noise
+
+    # Not in transit: check if it's time to start one
+    if now >= _next_transit_time:
+        _in_transit = True
+        _transit_end = now + TRANSIT_DURATION
         return base - TRANSIT_DEPTH + noise
 
+    # Normal state
     return base + noise
 
 # =========================
