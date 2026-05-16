@@ -155,34 +155,46 @@ def run_betsc():
         start_time = time.time()
         dip = None
 
-        while time.time() - start_time < WAIT_TIME:
-            brightness = get_brightness()
-            delta = baseline - brightness
+        # Announce star
+betsc_announce_star(star)
 
-            if dip is None:
-                if delta >= DIP_THRESHOLD:
-                    dip = DipEvent(time.time(), baseline)
-                    dip.add_sample(time.time(), brightness)
-                    betsc_on_dip_start()
+# Say the oxygen line ONCE
+print("BETSC: Holding my breath… I love exoplanets more than oxyge—")
+
+start_time = time.time()
+dip = None
+
+while time.time() - start_time < WAIT_TIME:
+    brightness = get_brightness()
+    delta = baseline - brightness
+
+    if dip is None:
+        if delta >= DIP_THRESHOLD:
+            dip = DipEvent(time.time(), baseline)
+            dip.add_sample(time.time(), brightness)
+            betsc_on_dip_start()
+    else:
+        dip.add_sample(time.time(), brightness)
+
+        if abs(brightness - baseline) < DIP_THRESHOLD / 2:
+            dip.end_time = time.time()
+            classification = classify_dip(dip)
+
+            if classification == "planet":
+                betsc_on_planet(dip)
+            elif classification == "cloud":
+                betsc_on_cloud(dip)
             else:
-                dip.add_sample(time.time(), brightness)
+                betsc_on_flicker(dip)
 
-                if abs(brightness - baseline) < DIP_THRESHOLD / 2:
-                    dip.end_time = time.time()
-                    classification = classify_dip(dip)
+            dip = None
+            break
 
-                    if classification == "planet":
-                        betsc_on_planet(dip)
-                    elif classification == "cloud":
-                        betsc_on_cloud(dip)
-                    else:
-                        betsc_on_flicker(dip)
+    time.sleep(SCAN_INTERVAL)
 
-                    dip = None
-                    break
-
-            betsc_waiting()
-            time.sleep(SCAN_INTERVAL)
+# If no dip happened
+if dip is None:
+    betsc_disappointed()
 
         if dip is None:
             betsc_disappointed()
