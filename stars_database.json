@@ -14,5 +14,116 @@
     "distance_ly": 2600,
     "known_planets": ["Kepler-17 b"],
     "variability": "medium"
+  },
+"Tau Ceti": {
+  "spectral_type": "G8V",
+  "temperature": 5344,
+  "radius_solar": 0.79,
+  "mass_solar": 0.78,
+  "distance_ly": 11.9,
+  "variability": "very low",
+  "metallicity_fe_h": -0.52,
+  "known_planets": [],
+  "notes": "Extremely stable Sun-like star; long suspected of hosting small planets."
+ },
+  "Epsilon Eridani": {
+  "spectral_type": "K2V",
+  "temperature": 5084,
+  "radius_solar": 0.74,
+  "mass_solar": 0.82,
+  "distance_ly": 10.5,
+  "variability": "high (young active star)",
+  "metallicity_fe_h": -0.13,
+  "known_planets": [],
+  "notes": "Young, active, debris disk present; strong candidate for giant planets."
+  },
+  "40 Eridani A": {
+  "spectral_type": "K1V",
+  "temperature": 5100,
+  "radius_solar": 0.86,
+  "mass_solar": 0.84,
+  "distance_ly": 16.3,
+  "variability": "low",
+  "metallicity_fe_h": -0.31,
+  "known_planets": [],
+  "notes": "Stable K-dwarf; famous as the fictional Vulcan star; excellent planet host candidate."
+  },
+  "Sigma Draconis": {
+  "spectral_type": "K0V",
+  "temperature": 5290,
+  "radius_solar": 0.77,
+  "mass_solar": 0.87,
+  "distance_ly": 18.8,
+  "variability": "very low",
+  "metallicity_fe_h": -0.20,
+  "known_planets": [],
+  "notes": "Extremely stable; considered one of the best Earth-like planet candidates."
+  },
+  "82 Eridani": {
+  "spectral_type": "G5V",
+  "temperature": 5660,
+  "radius_solar": 0.90,
+  "mass_solar": 0.90,
+  "distance_ly": 20.3,
+  "variability": "very low",
+  "metallicity_fe_h": -0.12,
+  "known_planets": [],
+  "notes": "Sun-like and quiet; long-term target for exoplanet searches."
+  },
+  "Zeta Tucanae": {
+  "spectral_type": "F9V",
+  "temperature": 6040,
+  "radius_solar": 1.20,
+  "mass_solar": 1.10,
+  "distance_ly": 28.0,
+  "variability": "low",
+  "metallicity_fe_h": -0.18,
+  "known_planets": [],
+  "notes": "Has a debris disk; strong candidate for young planetary system."
+  },
+  "Beta Hydri": {
+  "spectral_type": "G2IV",
+  "temperature": 5870,
+  "radius_solar": 1.81,
+  "mass_solar": 1.08,
+  "distance_ly": 24.3,
+  "variability": "very low",
+  "metallicity_fe_h": -0.10,
+  "known_planets": [],
+  "notes": "Subgiant Sun analogue; excellent target for long-period giant planets."
+  },
+  "Delta Pavonis": {
+  "spectral_type": "G8IV",
+  "temperature": 5500,
+  "radius_solar": 1.22,
+  "mass_solar": 0.99,
+  "distance_ly": 19.9,
+  "variability": "very low",
+  "metallicity_fe_h": +0.33,
+  "known_planets": [],
+  "notes": "One of the most Sun-like stars known; top SETI target; extremely planet-friendly."
+  },
+  "61 Virginis": {
+  "spectral_type": "G5V",
+  "temperature": 5560,
+  "radius_solar": 0.98,
+  "mass_solar": 0.95,
+  "distance_ly": 27.9,
+  "variability": "very low",
+  "metallicity_fe_h": -0.02,
+  "known_planets": [],
+  "notes": "Extremely quiet; suspected signals but nothing confirmed; excellent for small planets."
+  },
+  "Xi Bootis A": {
+  "spectral_type": "G8V",
+  "temperature": 5550,
+  "radius_solar": 0.83,
+  "mass_solar": 0.86,
+  "distance_ly": 22.0,
+  "variability": "high (active star)",
+  "metallicity_fe_h": -0.13,
+  "known_planets": [],
+  "notes": "Chaotic, magnetically active star; difficult but interesting exoplanet target."
   }
 }
+  
