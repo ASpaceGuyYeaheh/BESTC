@@ -101,7 +101,7 @@ def betsc_announce_star(star):
     print(f"\nBETSC: Now scanning **{star}**!")
     print("BETSC: OOO I hope this one has a planet… I’m READY!")
 
-def betsc_waiting():
+def betsc_wait_line_once():
     print("BETSC: Holding my breath… I love exoplanets more than oxyge—")
 
 def betsc_disappointed():
@@ -151,50 +151,38 @@ def run_betsc():
     for star in stars:
 
         betsc_announce_star(star)
+        betsc_wait_line_once()  # ONLY ONCE
 
         start_time = time.time()
         dip = None
 
-        # Announce star
-betsc_announce_star(star)
+        while time.time() - start_time < WAIT_TIME:
+            brightness = get_brightness()
+            delta = baseline - brightness
 
-# Say the oxygen line ONCE
-print("BETSC: Holding my breath… I love exoplanets more than oxyge—")
-
-start_time = time.time()
-dip = None
-
-while time.time() - start_time < WAIT_TIME:
-    brightness = get_brightness()
-    delta = baseline - brightness
-
-    if dip is None:
-        if delta >= DIP_THRESHOLD:
-            dip = DipEvent(time.time(), baseline)
-            dip.add_sample(time.time(), brightness)
-            betsc_on_dip_start()
-    else:
-        dip.add_sample(time.time(), brightness)
-
-        if abs(brightness - baseline) < DIP_THRESHOLD / 2:
-            dip.end_time = time.time()
-            classification = classify_dip(dip)
-
-            if classification == "planet":
-                betsc_on_planet(dip)
-            elif classification == "cloud":
-                betsc_on_cloud(dip)
+            if dip is None:
+                if delta >= DIP_THRESHOLD:
+                    dip = DipEvent(time.time(), baseline)
+                    dip.add_sample(time.time(), brightness)
+                    betsc_on_dip_start()
             else:
-                betsc_on_flicker(dip)
+                dip.add_sample(time.time(), brightness)
 
-            dip = None
-            break
+                if abs(brightness - baseline) < DIP_THRESHOLD / 2:
+                    dip.end_time = time.time()
+                    classification = classify_dip(dip)
 
-    time.sleep(SCAN_INTERVAL)
+                    if classification == "planet":
+                        betsc_on_planet(dip)
+                    elif classification == "cloud":
+                        betsc_on_cloud(dip)
+                    else:
+                        betsc_on_flicker(dip)
 
-# If no dip happened
-if dip is None:
-    betsc_disappointed()
+                    dip = None
+                    break
+
+            time.sleep(SCAN_INTERVAL)
 
         if dip is None:
             betsc_disappointed()
