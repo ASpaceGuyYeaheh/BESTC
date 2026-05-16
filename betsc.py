@@ -16,7 +16,7 @@ print("")
 # -----------------------------
 DETECTION_THRESHOLD = 0.999   # realistic ~0.1% chance per check
 SCAN_DURATION = 10            # seconds
-SCAN_INTERVAL = 0.3           # seconds between checks
+SCAN_INTERVAL = 0.1           # seconds between checks
 
 # -----------------------------
 # LOAD TARGET STARS
