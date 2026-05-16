@@ -1,12 +1,25 @@
 import time
 import random
+import json
+import os
+from datetime import datetime
+
+import betsc  # uses betsc.py as-is
+
+# =========================
+# FILE PATHS
+# =========================
+
+STARS_DB_PATH = "stars_database.json"
+BRAIN_PATH = "brain.json"
+TARGET_PATH = "target_stars.txt"
 
 # =========================
 # CONFIG
 # =========================
 
-NIGHT_DURATION = 600.0      # 10 minutes in seconds (you can lower for testing)
-SCAN_INTERVAL = 0.05         # seconds between samples
+NIGHT_DURATION = 600.0      # 10 minutes in seconds (lower for testing if you want)
+SCAN_INTERVAL = 0.2         # seconds between samples
 
 BASELINE_SAMPLES = 50
 DIP_THRESHOLD = 0.003       # how far below baseline counts as a dip
@@ -27,6 +40,56 @@ TRANSIT_DEPTH = 0.01
 
 MIN_PLANET_DEPTH = 0.007
 MIN_PLANET_DURATION = 60.0     # at least 1 minute to count as planet
+
+# =========================
+# UTILITIES
+# =========================
+
+def load_json(path, default):
+    if not os.path.exists(path):
+        return default
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return default
+
+def save_json(path, data):
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
+
+def load_target_star():
+    if not os.path.exists(TARGET_PATH):
+        raise FileNotFoundError(f"{TARGET_PATH} not found.")
+    with open(TARGET_PATH, "r", encoding="utf-8") as f:
+        for line in f:
+            name = line.strip()
+            if name:
+                return name
+    raise ValueError("target_stars.txt is empty or only whitespace.")
+
+def load_star_info(star_name):
+    db = load_json(STARS_DB_PATH, {})
+    info = db.get(star_name, None)
+    if info is None:
+        info = {
+            "spectral_type": "Unknown",
+            "temperature": None,
+            "radius_solar": None,
+            "mass_solar": None,
+            "distance_ly": None,
+            "variability": "unknown",
+            "metallicity_fe_h": None,
+            "known_planets": [],
+            "notes": "Star not found in database; using minimal info."
+        }
+    return info
+
+def load_brain():
+    return load_json(BRAIN_PATH, {})
+
+def save_brain(brain):
+    save_json(BRAIN_PATH, brain)
 
 # =========================
 # EVENT MODEL
@@ -155,51 +218,114 @@ def classify_dip(dip: DipEvent):
     return "flicker"
 
 # =========================
-# BETSC PERSONALITY
+# PLANET NAMING (APPROVAL MODE)
 # =========================
 
-def betsc_intro():
-    print("BETSC: Initialising… deep breath… okay. One star. One night. Let’s HUNT.")
+def handle_new_planet_candidate(star_name, dip, star_info, brain, planet_detections):
+    """
+    Called when a dip is classified as a planet.
+    - Calls BETSC's planet reaction
+    - Checks if this is a 'new' planet for this star
+    - Pauses and asks you for a name (excited rambling mode)
+    - Updates brain structure
+    """
+    # Let BETSC react first (personality from betsc.py)
+    betsc.betsc_on_planet(dip)
 
-def betsc_baseline():
-    print("BETSC: Building baseline… don’t move the telescope, don’t sneeze, don’t even THINK loud.")
+    star_entry = brain.get(star_name, {})
+    discovered = star_entry.get("discovered_planets", [])
 
-def betsc_night_start():
-    print("\nBETSC: Night started. Watching this star for the whole night. No NEXT button. Just me and photons.")
+    # If star_database already has known planets, we treat this as another detection,
+    # not a brand new planet to name.
+    known_from_db = star_info.get("known_planets", []) or []
 
-def betsc_on_dip_start():
-    print("BETSC: I THINK I SEE SOMETHING!! HOLD ON— HOLD ON— HOLD ON—")
+    is_first_for_star = (len(known_from_db) == 0 and len(discovered) == 0)
 
-def betsc_on_planet(dip):
-    print("BETSC: THAT’S A PLANET. THAT’S A PLANET. THAT’S A PLANET.")
-    print(f"BETSC: Duration {dip.duration:.1f}s, depth {dip.max_depth:.5f}. I am a GENIUS.")
+    planet_name = None
 
-def betsc_on_cloud(dip):
-    print("BETSC: That was HUGE and MESSY. Cloud. Absolutely a cloud.")
-    print("BETSC: Atmosphere, you are my nemesis.")
+    if is_first_for_star:
+        # Excited rambling pause
+        print()
+        print("BETSC: BENJAMIN. BENJAMIN. BENJAMIN.")
+        print("BETSC: I THINK THIS IS A *NEW* PLANET.")
+        print("BETSC: I HAVE FROZEN TIME. I AM VIBRATING.")
+        print("BETSC: PLEASE. NAME. THE. PLANET.")
+        print()
+        suggestion = f"{star_name} b"
+        user_input = input(f"Name this planet (press Enter to use '{suggestion}', or type your own, or just Enter again to skip): ").strip()
 
-def betsc_on_flicker(dip):
-    print("BETSC: Tiny little twitch. Star flicker. Not impressed.")
-    print("BETSC: I’ll keep watching. Could still be something real.")
+        if user_input:
+            planet_name = user_input
+        else:
+            # Ask once more if they want the default or to skip
+            confirm = input(f"Use default name '{suggestion}'? (y/n): ").strip().lower()
+            if confirm == "y":
+                planet_name = suggestion
+            else:
+                planet_name = None  # unnamed candidate
 
-def betsc_night_end(summary):
-    print("\nBETSC: Night over. Shutting down the telescope… gently.")
-    print(f"BETSC: Summary: {summary['planets']} planet(s), {summary['clouds']} cloud(s), {summary['flickers']} flicker(s).")
-    if summary["planets"] > 0:
-        print("BETSC: I FOUND A PLANET. I WILL BE TALKING ABOUT THIS FOR WEEKS.")
-    elif summary["clouds"] > 0 or summary["flickers"] > 0:
-        print("BETSC: No planets… but I learned a LOT. Training arc continues.")
+        if planet_name:
+            print(f"BETSC: OKAY. OKAY. WRITING '{planet_name}' INTO MY BRAIN. VERY CAREFULLY.")
+            discovered.append(planet_name)
+            star_entry["discovered_planets"] = discovered
+            brain[star_name] = star_entry
+            save_brain(brain)
+        else:
+            print("BETSC: UNNAMED PLANET CANDIDATE. I WILL STILL REMEMBER THE DIP. I AM MILDLY OFFENDED BUT I UNDERSTAND.")
     else:
-        print("BETSC: Nothing. Absolutely nothing. I stared at a star for 10 minutes. I need a snack.")
-    print("BETSC: zzzzzzzzzzzzzzzzzzzzzzzzzzzzz…")
+        # Not the first planet for this star; just log detection
+        print("BETSC: Another planet-like dip for this star. I’ll log it with the others.")
+
+    # Record this detection for tonight's observation summary
+    planet_detections.append({
+        "name": planet_name,
+        "depth": dip.max_depth,
+        "duration": dip.duration
+    })
+
+# =========================
+# MEMORY WRITING
+# =========================
+
+def write_observation_to_brain(star_name, brain, summary, planet_detections):
+    star_entry = brain.get(star_name, {})
+    observations = star_entry.get("observations", [])
+
+    obs = {
+        "date": datetime.utcnow().isoformat() + "Z",
+        "planets_detected": planet_detections,
+        "clouds": summary["clouds"],
+        "flickers": summary["flickers"],
+        "notes": "BETSC: Night training run. I watched. I classified. I screamed."
+    }
+
+    observations.append(obs)
+    star_entry["observations"] = observations
+    brain[star_name] = star_entry
+    save_brain(brain)
 
 # =========================
 # MAIN NIGHT LOOP
 # =========================
 
 def run_betsc_night():
-    betsc_intro()
-    betsc_baseline()
+    # Load target star
+    star_name = load_target_star()
+    star_info = load_star_info(star_name)
+    brain = load_brain()
+
+    # Intro with personality
+    betsc.betsc_intro()
+    print(f"BETSC: Tonight's target: {star_name}.")
+    print(f"BETSC: Spectral type: {star_info.get('spectral_type', 'Unknown')}, variability: {star_info.get('variability', 'unknown')}.")
+    if star_name in brain:
+        print("BETSC: I REMEMBER THIS STAR. I HAVE SEEN IT BEFORE. I AM OPENING MY BRAIN.")
+        past_obs = brain[star_name].get("observations", [])
+        print(f"BETSC: I have {len(past_obs)} past observation(s) of this star.")
+    else:
+        print("BETSC: I HAVE NEVER SEEN THIS STAR BEFORE. FRESH PHOTONS. FRESH CHAOS.")
+
+    betsc.betsc_baseline()
 
     # Simple baseline around 1.0 with noise
     baseline_samples = []
@@ -210,13 +336,14 @@ def run_betsc_night():
     print(f"BETSC: Baseline locked at {baseline:.5f}. I trust this. Mostly.")
 
     events = generate_night_events()
-    betsc_night_start()
+    betsc.betsc_night_start()
 
     start_time = time.time()
     dip = None
     dip_end_counter = 0
 
     summary = {"planets": 0, "clouds": 0, "flickers": 0}
+    planet_detections = []
 
     while True:
         now = time.time()
@@ -233,7 +360,7 @@ def run_betsc_night():
                 dip = DipEvent(elapsed, baseline)
                 dip.add_sample(elapsed, brightness)
                 dip_end_counter = 0
-                betsc_on_dip_start()
+                betsc.betsc_on_dip_start()
         else:
             # Continue dip
             dip.add_sample(elapsed, brightness)
@@ -248,13 +375,19 @@ def run_betsc_night():
                 classification = classify_dip(dip)
 
                 if classification == "planet":
-                    betsc_on_planet(dip)
                     summary["planets"] += 1
+                    handle_new_planet_candidate(
+                        star_name,
+                        dip,
+                        star_info,
+                        brain,
+                        planet_detections
+                    )
                 elif classification == "cloud":
-                    betsc_on_cloud(dip)
+                    betsc.betsc_on_cloud(dip)
                     summary["clouds"] += 1
                 else:
-                    betsc_on_flicker(dip)
+                    betsc.betsc_on_flicker(dip)
                     summary["flickers"] += 1
 
                 dip = None
@@ -267,16 +400,23 @@ def run_betsc_night():
         dip.end_time = NIGHT_DURATION
         classification = classify_dip(dip)
         if classification == "planet":
-            betsc_on_planet(dip)
             summary["planets"] += 1
+            handle_new_planet_candidate(
+                star_name,
+                dip,
+                star_info,
+                brain,
+                planet_detections
+            )
         elif classification == "cloud":
-            betsc_on_cloud(dip)
+            betsc.betsc_on_cloud(dip)
             summary["clouds"] += 1
         else:
-            betsc_on_flicker(dip)
+            betsc.betsc_on_flicker(dip)
             summary["flickers"] += 1
 
-    betsc_night_end(summary)
+    betsc.betsc_night_end(summary)
+    write_observation_to_brain(star_name, brain, summary, planet_detections)
 
 # =========================
 # ENTRY POINT
