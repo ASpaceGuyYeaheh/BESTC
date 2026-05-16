@@ -27,12 +27,33 @@ def load_target_stars():
     except FileNotFoundError:
         print("BETSC: target_stars.txt missing!! I can’t scan NOTHING!!")
         return []
+# =========================
+# SAFE SIMULATED TRANSIT MODE
+# =========================
+
+SIM_TRANSIT_DEPTH = 0.01
+SIM_TRANSIT_DURATION = 3.0
+SIM_TRANSIT_CHANCE = 0.25
+
+def get_brightness_with_transit(baseline):
+    brightness = baseline + random.uniform(-0.0005, 0.0005)
+
+    # Random chance of a transit
+    if random.random() < SIM_TRANSIT_CHANCE:
+        dip = SIM_TRANSIT_DEPTH
+        end_time = time.time() + SIM_TRANSIT_DURATION
+        while time.time() < end_time:
+            yield brightness - dip
+        return
+
+    # No transit
+    yield brightness
 
 # =========================
 # MOCK BRIGHTNESS SOURCE
 # =========================
 
-def get_brightness():
+def brightness = next(get_brightness_with_transit(baseline)):
     base = 1.0
     noise = random.uniform(-0.0005, 0.0005)
     return base + noise
