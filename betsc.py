@@ -5,7 +5,7 @@ import random
 # CONFIG
 # =========================
 
-SCAN_INTERVAL = 0.1
+SCAN_INTERVAL = 0.05
 BASELINE_SAMPLES = 50
 DIP_THRESHOLD = 0.003
 MIN_DIP_DURATION = 5.0
