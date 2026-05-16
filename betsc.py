@@ -5,7 +5,7 @@ import random
 # CONFIG
 # =========================
 
-SCAN_INTERVAL = 0.05
+SCAN_INTERVAL = 0.05          # faster scan, still safe
 BASELINE_SAMPLES = 50
 DIP_THRESHOLD = 0.003
 MIN_DIP_DURATION = 5.0
@@ -27,35 +27,30 @@ def load_target_stars():
     except FileNotFoundError:
         print("BETSC: target_stars.txt missing!! I can’t scan NOTHING!!")
         return []
-# =========================
-# SAFE SIMULATED TRANSIT MODE
-# =========================
-
-SIM_TRANSIT_DEPTH = 0.01
-SIM_TRANSIT_DURATION = 3.0
-SIM_TRANSIT_CHANCE = 0.25
-
-def get_brightness_with_transit(baseline):
-    brightness = baseline + random.uniform(-0.0005, 0.0005)
-
-    # Random chance of a transit
-    if random.random() < SIM_TRANSIT_CHANCE:
-        dip = SIM_TRANSIT_DEPTH
-        end_time = time.time() + SIM_TRANSIT_DURATION
-        while time.time() < end_time:
-            yield brightness - dip
-        return
-
-    # No transit
-    yield brightness
 
 # =========================
-# MOCK BRIGHTNESS SOURCE
+# BRIGHTNESS SOURCE (WITH SAFE TRANSIT)
 # =========================
 
-def brightness = next(get_brightness_with_transit(baseline)):
+# Chance that a given brightness sample is inside a transit
+TRANSIT_PROBABILITY = 0.15     # 15% of samples will be in a dip
+TRANSIT_DEPTH = 0.01           # 1% dip
+
+def get_brightness():
+    """
+    Safe brightness source:
+    - Base brightness ~1.0
+    - Small noise
+    - Sometimes a 1% dip to simulate an exoplanet transit
+    Returns a single float. No generators. No complexity.
+    """
     base = 1.0
     noise = random.uniform(-0.0005, 0.0005)
+
+    # Simulated transit: sometimes reduce brightness by TRANSIT_DEPTH
+    if random.random() < TRANSIT_PROBABILITY:
+        return base - TRANSIT_DEPTH + noise
+
     return base + noise
 
 # =========================
@@ -172,7 +167,7 @@ def run_betsc():
     for star in stars:
 
         betsc_announce_star(star)
-        betsc_wait_line_once()  # ONLY ONCE
+        betsc_wait_line_once()  # ONLY ONCE PER STAR
 
         start_time = time.time()
         dip = None
