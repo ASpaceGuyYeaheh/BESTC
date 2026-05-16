@@ -11,3 +11,8 @@ def scan_star(star):
 def log_event(message):
     with open("logs/betsc.log", "a") as f:
         f.write(message + "\n")
+
+stars = load_targets()
+
+for star in stars:
+    scan_star(star)
