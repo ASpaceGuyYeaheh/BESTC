@@ -293,6 +293,49 @@ def emotion_on_flicker(emotions):
     emotions["bored"] = clamp_emotion(emotions["bored"] + 5)
     emotions["excited"] = clamp_emotion(emotions["excited"] + 5)
 
+def apply_star_personality(star_type, emotions):
+    """
+    Adjust BETSC's emotional baseline depending on the star type.
+    """
+
+    star_type = star_type.upper()
+
+    # G‑type stars → hopeful, optimistic
+    if star_type.startswith("G"):
+        emotions["excited"] += 5
+        emotions["bored"] = max(0, emotions["bored"] - 3)
+
+    # K‑type stars → cozy, calm
+    elif star_type.startswith("K"):
+        emotions["sleepy"] += 3
+        emotions["angry_clouds"] = max(0, emotions["angry_clouds"] - 5)
+
+    # M‑dwarfs → suspicious, paranoid
+    elif star_type.startswith("M"):
+        emotions["annoyed"] += 4
+        emotions["excited"] = max(0, emotions["excited"] - 2)
+
+    # F‑type stars → dramatic, theatrical
+    elif star_type.startswith("F"):
+        emotions["excited"] += 8
+        emotions["angry_clouds"] += 5
+
+    # A‑type stars → elegant, snobby
+    elif star_type.startswith("A"):
+        emotions["annoyed"] += 2
+        emotions["bored"] += 4
+
+    # Metal‑poor stars → judgmental
+    elif "POOR" in star_type or "[FE/H]" in star_type:
+        emotions["annoyed"] += 6
+
+    # Variable stars → anxious
+    elif "VAR" in star_type or "VARIABLE" in star_type:
+        emotions["sleepy"] = max(0, emotions["sleepy"] - 5)
+        emotions["annoyed"] += 5
+
+    print(f"BETSC (personality shift for {star_type}): {emotions}")
+
 def emotion_on_bored(emotions):
     emotions["bored"] = clamp_emotion(emotions["bored"] + 10)
     emotions["annoyed"] = clamp_emotion(emotions["annoyed"] + 5)
@@ -335,6 +378,7 @@ def write_observation_to_brain(star_name, brain, summary, planet_detections):
 def run_betsc_night():
     star_name = load_target_star()
     star_info = load_star_info(star_name)
+    apply_star_personality(star_type, emotions)
     brain = load_brain()
     emotions = initialize_emotions(brain, star_name)
 
