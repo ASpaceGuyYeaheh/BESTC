@@ -11,3 +11,16 @@
     ]
   }
 }
+
+"emotions": {
+    "excited": 40,
+    "annoyed": 20,
+    "angry_clouds": 30,   <-- uncapped
+    "bored": 10,
+    "paranoid": 15,
+    "smug": 5,
+    "offended": 0,
+    "sleepy": 0,
+    "determined": 25
+}
+
