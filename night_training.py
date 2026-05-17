@@ -422,7 +422,7 @@ star_entry["emotions"] = emotions
 brain[star_name] = star_entry
 save_brain(brain)
 
-    write_observation_to_brain(star_name, brain, summary, planet_detections)
+write_observation_to_brain(star_name, brain, summary, planet_detections)
 
 
 if __name__ == "__main__":
