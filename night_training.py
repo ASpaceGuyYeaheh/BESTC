@@ -239,6 +239,72 @@ def handle_new_planet_candidate(star_name, dip, star_info, brain, planet_detecti
         "duration": dip.duration
     })
 
+# =========================
+# EMOTIONAL ENGINE
+# =========================
+
+def clamp_emotion(value):
+    return max(0, min(100, value))
+
+def initialize_emotions(brain, star_name):
+    star_entry = brain.get(star_name, {})
+    emotions = star_entry.get("emotions")
+
+    if emotions is None:
+        emotions = {
+            "excited": 40,
+            "annoyed": 20,
+            "angry_clouds": 30,   # UNCAPPED
+            "bored": 10,
+            "paranoid": 15,
+            "smug": 5,
+            "offended": 0,
+            "sleepy": 0,
+            "determined": 25
+        }
+        star_entry["emotions"] = emotions
+        brain[star_name] = star_entry
+        save_brain(brain)
+
+    return emotions
+
+def decay_emotions(emotions):
+    for key in emotions:
+        if key == "angry_clouds":
+            continue
+        emotions[key] = clamp_emotion(emotions[key] - 5)
+
+def emotion_on_planet(emotions):
+    emotions["excited"] = clamp_emotion(emotions["excited"] + 40)
+    emotions["smug"] = clamp_emotion(emotions["smug"] + 20)
+    emotions["determined"] = clamp_emotion(emotions["determined"] + 10)
+    emotions["bored"] = 0
+    emotions["annoyed"] = 0
+    emotions["angry_clouds"] = max(0, emotions["angry_clouds"] - 1)
+
+def emotion_on_cloud(emotions):
+    emotions["angry_clouds"] += 10
+    emotions["annoyed"] = clamp_emotion(emotions["annoyed"] + 10)
+    emotions["excited"] = clamp_emotion(emotions["excited"] - 10)
+    emotions["paranoid"] = clamp_emotion(emotions["paranoid"] + 5)
+
+def emotion_on_flicker(emotions):
+    emotions["annoyed"] = clamp_emotion(emotions["annoyed"] + 15)
+    emotions["bored"] = clamp_emotion(emotions["bored"] + 5)
+    emotions["excited"] = clamp_emotion(emotions["excited"] + 5)
+
+def emotion_on_bored(emotions):
+    emotions["bored"] = clamp_emotion(emotions["bored"] + 10)
+    emotions["annoyed"] = clamp_emotion(emotions["annoyed"] + 5)
+
+def emotion_on_skip(emotions):
+    emotions["offended"] = 100
+    emotions["excited"] = clamp_emotion(emotions["excited"] - 20)
+    emotions["smug"] = clamp_emotion(emotions["smug"] - 10)
+
+def emotion_on_night_end(emotions):
+    emotions["sleepy"] = clamp_emotion(emotions["sleepy"] + 40)
+    emotions["excited"] = clamp_emotion(emotions["excited"] - 10)
 
 # =========================
 # MEMORY WRITING
@@ -270,6 +336,7 @@ def run_betsc_night():
     star_name = load_target_star()
     star_info = load_star_info(star_name)
     brain = load_brain()
+    emotions = initialize_emotions(brain, star_name)
 
     betsc.betsc_announce_star(star_name)
 
@@ -325,14 +392,20 @@ def run_betsc_night():
                 classification = classify_dip(dip)
 
                 if classification == "planet":
+                    emotion_on_planet(emotions)
                     summary["planets"] += 1
                     handle_new_planet_candidate(star_name, dip, star_info, brain, planet_detections)
+                    print(f"BETSC (emotional log): {emotions}")
                 elif classification == "cloud":
+                    emotion_on_cloud(emotions)
                     summary["clouds"] += 1
                     betsc.betsc_on_cloud(dip)
+                    print(f"BETSC (emotional log): {emotions}")
                 else:
+                    emotion_on_flicker(emotions)
                     summary["flickers"] += 1
                     betsc.betsc_on_flicker(dip)
+                    print(f"BETSC (emotional log): {emotions}")
 
                 dip = None
                 dip_end_counter = 0
@@ -340,6 +413,13 @@ def run_betsc_night():
         time.sleep(SCAN_INTERVAL)
 
     betsc.betsc_sleep()
+    emotion_on_night_end(emotions)
+decay_emotions(emotions)
+
+star_entry = brain.get(star_name, {})
+star_entry["emotions"] = emotions
+brain[star_name] = star_entry
+save_brain(brain)
     write_observation_to_brain(star_name, brain, summary, planet_detections)
 
 
