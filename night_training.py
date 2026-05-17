@@ -462,7 +462,8 @@ def run_betsc_night():
     apply_star_personality(spectral_type, variability, emotions, brain, star_name)
 
     # THEN print BETSC's normal intro lines
-    print_intro_lines(star_name, star_info, emotions)
+   print(f"Starting night for {star_name}...")
+print(f"Star info: {star_info}")
 
     # Baseline
     next_wait_line = time.time() + random.uniform(WAIT_LINE_INTERVAL_MIN, WAIT_LINE_INTERVAL_MAX)
