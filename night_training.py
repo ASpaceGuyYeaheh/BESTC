@@ -458,9 +458,11 @@ def run_betsc_night():
     spectral_type = star_info.get("spectral_type", "unknown")
     variability = star_info.get("variability", "unknown")
 
+    # personality AFTER emotions exist
     apply_star_personality(spectral_type, variability, emotions, brain, star_name)
 
-    betsc.betsc_announce_star(star_name)
+    # THEN print BETSC's normal intro lines
+    print_intro_lines(star_name, star_info, emotions)
 
     # Baseline
     next_wait_line = time.time() + random.uniform(WAIT_LINE_INTERVAL_MIN, WAIT_LINE_INTERVAL_MAX)
