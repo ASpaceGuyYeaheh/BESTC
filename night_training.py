@@ -451,9 +451,14 @@ def write_observation_to_brain(star_name, brain, summary, planet_detections):
 def run_betsc_night():
     star_name = load_target_star()
     star_info = load_star_info(star_name)
-    apply_star_personality(star_type, emotions)
+
     brain = load_brain()
     emotions = initialize_emotions(brain, star_name)
+
+    spectral_type = star_info.get("spectral_type", "unknown")
+    variability = star_info.get("variability", "unknown")
+
+    apply_star_personality(spectral_type, variability, emotions, brain, star_name)
 
     betsc.betsc_announce_star(star_name)
 
