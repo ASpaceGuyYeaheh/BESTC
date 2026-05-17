@@ -415,15 +415,14 @@ def run_betsc_night():
     betsc.betsc_sleep()
     
     emotion_on_night_end(emotions)
-decay_emotions(emotions)
+    decay_emotions(emotions)
 
-star_entry = brain.get(star_name, {})
-star_entry["emotions"] = emotions
-brain[star_name] = star_entry
-save_brain(brain)
+    star_entry = brain.get(star_name, {})
+    star_entry["emotions"] = emotions
+    brain[star_name] = star_entry
+    save_brain(brain)
 
-write_observation_to_brain(star_name, brain, summary, planet_detections)
-
+    write_observation_to_brain(star_name, brain, summary, planet_detections)
 
 if __name__ == "__main__":
     run_betsc_night()
