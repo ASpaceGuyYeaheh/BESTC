@@ -413,6 +413,7 @@ def run_betsc_night():
         time.sleep(SCAN_INTERVAL)
 
     betsc.betsc_sleep()
+    
     emotion_on_night_end(emotions)
 decay_emotions(emotions)
 
