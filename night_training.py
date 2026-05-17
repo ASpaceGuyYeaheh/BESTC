@@ -240,7 +240,7 @@ def handle_new_planet_candidate(star_name, dip, star_info, brain, planet_detecti
     })
 
 # =========================
-# EMOTIONAL ENGINE
+# EMOTIONAL ENGINE + PERSONALITY SYSTEM (SCRIPT 2)
 # =========================
 
 def clamp_emotion(value):
@@ -268,6 +268,122 @@ def initialize_emotions(brain, star_name):
 
     return emotions
 
+
+# =========================
+# PERSONALITY LINES (SCRIPT 2)
+# =========================
+
+def generate_personality_lines(spectral_type, variability):
+    spectral_type = spectral_type.upper()
+    variability = variability.lower()
+
+    # --- Spectral Type Lines ---
+    if spectral_type.startswith("G"):
+        spectral_line = "A classic G‑star. Reliable. Warm. I like this one."
+    elif spectral_type.startswith("K"):
+        spectral_line = "A K‑star… soft, warm, and steady. This feels nice."
+    elif spectral_type.startswith("M"):
+        spectral_line = "An M‑dwarf. Tiny. Unpredictable. I’m watching you."
+    elif spectral_type.startswith("F"):
+        spectral_line = "An F‑star! Bright, bold, and full of flair. My kind of chaos."
+    elif spectral_type.startswith("A"):
+        spectral_line = "An A‑type. Too perfect. Too shiny. Tone it down."
+    elif spectral_type.startswith("B"):
+        spectral_line = "A B‑star?! That’s a LOT of photons. I’m sweating."
+    elif spectral_type.startswith("O"):
+        spectral_line = "An O‑star. That’s a cosmic blowtorch. I’m scared."
+    else:
+        spectral_line = "I don’t know what this star is, but I’m pretending I do."
+
+    # --- Variability Lines ---
+    if variability in ["none", "low"]:
+        variability_line = "Stable star. Good. I can relax."
+    elif variability == "medium":
+        variability_line = "Moderate variability. I’ll keep an eye on it."
+    elif variability == "high":
+        variability_line = "High variability?! It’s flickering on purpose. I KNOW it is."
+    elif variability in ["flare", "eruptive"]:
+        variability_line = "Flare star detected. I swear it’s trying to kill me."
+    else:
+        variability_line = "Variability unknown. That’s worse than knowing."
+
+    return spectral_line, variability_line
+
+# =========================
+# PERSONALITY EMOTION SHIFTS (SCRIPT 2)
+# =========================
+
+def apply_star_personality(spectral_type, variability, emotions, brain, star_name):
+    """
+    Adjust BETSC's emotional baseline depending on spectral type + variability.
+    Save personality lines into the brain.
+    """
+
+    spectral_type = spectral_type.upper()
+    variability = variability.lower()
+
+    # --- Emotional shifts based on spectral type ---
+    if spectral_type.startswith("G"):
+        emotions["excited"] += 5
+        emotions["bored"] = max(0, emotions["bored"] - 3)
+
+    elif spectral_type.startswith("K"):
+        emotions["sleepy"] += 3
+        emotions["angry_clouds"] = max(0, emotions["angry_clouds"] - 5)
+
+    elif spectral_type.startswith("M"):
+        emotions["annoyed"] += 4
+        emotions["excited"] = max(0, emotions["excited"] - 2)
+
+    elif spectral_type.startswith("F"):
+        emotions["excited"] += 8
+        emotions["angry_clouds"] += 5
+
+    elif spectral_type.startswith("A"):
+        emotions["annoyed"] += 2
+        emotions["bored"] += 4
+
+    elif spectral_type.startswith("B"):
+        emotions["excited"] += 10
+        emotions["paranoid"] += 10
+
+    elif spectral_type.startswith("O"):
+        emotions["paranoid"] += 20
+        emotions["excited"] -= 5
+
+    # --- Variability emotional shifts ---
+    if variability in ["none", "low"]:
+        emotions["sleepy"] += 2
+
+    elif variability == "medium":
+        emotions["annoyed"] += 3
+
+    elif variability == "high":
+        emotions["paranoid"] += 10
+        emotions["annoyed"] += 5
+
+    elif variability in ["flare", "eruptive"]:
+        emotions["paranoid"] += 20
+        emotions["angry_clouds"] += 10
+
+    # --- Generate personality lines ---
+    spectral_line, variability_line = generate_personality_lines(spectral_type, variability)
+
+    print("BETSC personality:", spectral_line)
+    print("BETSC variability:", variability_line)
+
+    # --- Save personality lines into brain ---
+    star_entry = brain.get(star_name, {})
+    star_entry["spectral_personality_line"] = spectral_line
+    star_entry["variability_personality_line"] = variability_line
+    brain[star_name] = star_entry
+    save_brain(brain)
+
+
+# =========================
+# EMOTION EVENTS
+# =========================
+
 def decay_emotions(emotions):
     for key in emotions:
         if key == "angry_clouds":
@@ -292,49 +408,6 @@ def emotion_on_flicker(emotions):
     emotions["annoyed"] = clamp_emotion(emotions["annoyed"] + 15)
     emotions["bored"] = clamp_emotion(emotions["bored"] + 5)
     emotions["excited"] = clamp_emotion(emotions["excited"] + 5)
-
-def apply_star_personality(star_type, emotions):
-    """
-    Adjust BETSC's emotional baseline depending on the star type.
-    """
-
-    star_type = star_type.upper()
-
-    # G‑type stars → hopeful, optimistic
-    if star_type.startswith("G"):
-        emotions["excited"] += 5
-        emotions["bored"] = max(0, emotions["bored"] - 3)
-
-    # K‑type stars → cozy, calm
-    elif star_type.startswith("K"):
-        emotions["sleepy"] += 3
-        emotions["angry_clouds"] = max(0, emotions["angry_clouds"] - 5)
-
-    # M‑dwarfs → suspicious, paranoid
-    elif star_type.startswith("M"):
-        emotions["annoyed"] += 4
-        emotions["excited"] = max(0, emotions["excited"] - 2)
-
-    # F‑type stars → dramatic, theatrical
-    elif star_type.startswith("F"):
-        emotions["excited"] += 8
-        emotions["angry_clouds"] += 5
-
-    # A‑type stars → elegant, snobby
-    elif star_type.startswith("A"):
-        emotions["annoyed"] += 2
-        emotions["bored"] += 4
-
-    # Metal‑poor stars → judgmental
-    elif "POOR" in star_type or "[FE/H]" in star_type:
-        emotions["annoyed"] += 6
-
-    # Variable stars → anxious
-    elif "VAR" in star_type or "VARIABLE" in star_type:
-        emotions["sleepy"] = max(0, emotions["sleepy"] - 5)
-        emotions["annoyed"] += 5
-
-    print(f"BETSC (personality shift for {star_type}): {emotions}")
 
 def emotion_on_bored(emotions):
     emotions["bored"] = clamp_emotion(emotions["bored"] + 10)
