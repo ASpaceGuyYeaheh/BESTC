@@ -72,7 +72,11 @@ def load_target_star():
 
 def load_star_info(star_name):
     db = load_json(STARS_DB_PATH, {})
-    return db.get(star_name, {
+
+    # Normalize the name
+    normalized = star_name.strip().replace("\u00A0", " ")  # remove non-breaking spaces
+
+    return db.get(normalized, {
         "spectral_type": "Unknown",
         "variability": "unknown",
         "known_planets": []
