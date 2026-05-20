@@ -1,3 +1,6 @@
+import os
+print("DEBUG CWD:", os.getcwd())
+
 import time
 import random
 import json
