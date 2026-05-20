@@ -71,6 +71,8 @@ def load_target_star():
     raise ValueError("target_stars.txt is empty.")
 
 def load_star_info(star_name):
+    print("DEBUG:", repr(star_name))
+
     db = load_json(STARS_DB_PATH, {})
 
     # Normalize the name
