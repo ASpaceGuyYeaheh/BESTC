@@ -72,6 +72,7 @@ def load_target_star():
 
 def load_star_info(star_name):
     print("DEBUG:", repr(star_name))
+    print("DEBUG PATH:", STARS_DB_PATH)
 
     db = load_json(STARS_DB_PATH, {})
     print("DEBUG DB KEYS:", list(db.keys()))
