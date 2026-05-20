@@ -74,6 +74,7 @@ def load_star_info(star_name):
     print("DEBUG:", repr(star_name))
 
     db = load_json(STARS_DB_PATH, {})
+    print("DEBUG DB KEYS:", list(db.keys()))
 
     # Normalize the name
     normalized = star_name.strip().replace("\u00A0", " ")  # remove non-breaking spaces
